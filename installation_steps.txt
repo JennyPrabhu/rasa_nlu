@@ -1,0 +1,88 @@
+Installation Steps
+-----------------
+
+1. Create a directory "rasa_nlu" inside your preferred location. We will call this as workDir
+      Example:-   workDir = /home/ubuntu/USERS/JENNY/CHAT/rasa_nlu
+
+2.  Issue the below git clone command to pull the repository locally
+      Command:- git clone https://github.com/RasaHQ/rasa_nlu.git
+      
+3.  This creates a directory rasa_nlu inside the existing directory and the path appears like below 
+      /home/ubuntu/USERS/JENNY/CHAT/rasa_nlu/rasa_nlu
+
+4.  execute the below command to install all the dependant modules
+      pip install -r requirements.txt 
+      pip install -e .
+      
+5. Create your project directory under the work directory. 
+    Example:-  projDir = $workDir/PROJECT
+
+6.  Inside this directory , create 3 directories 
+      mkdir -p CONFIG TRAIN MODELS
+
+7.  Go Inside CONFIG Folder , create a file called config.yml 
+          This file holds the configuration of our understanding process ( pipeline ) 
+          
+8.  Paste the below parameters in the file 
+          language: "en"
+pipeline:
+- name: "tokenizer_whitespace"
+- name: "ner_crf"
+- name: "ner_synonyms"
+- name: "intent_featurizer_count_vectors"
+- name: "ner_duckling_http"
+  url: "http://localhost:8000"
+  #dimensions: ["amount-of-money", "duration", "quantity", "time", "volume"]
+- name: "intent_classifier_tensorflow_embedding"
+intent_tokenization_flag: "true"
+intent_split_symbol: "_"
+epochs: "10"
+
+9. Please note yml is a strict parser and might throw some errors if the spaces are not alligned. 
+Please make it consistent to avoid such issues
+
+10. Go Inside TRAIN Folder , create a file called nlu.md 
+          This file will hold all the training data of your project. 
+          
+11. Go to Project directory and create a file called train.sh 
+        This file will hold the commandline to initiate the training of models 
+        
+ 12. Paste the below parameters in the file
+
+currDir=$WorkDir/$projDir
+
+python3 -m rasa_nlu.train -c $currDir/CONFIG/config.yml --data $currDir/TRAIN/nlu.md -o $folderName --fixed_model_name $currDir/MODELS --project $folderName --verbose
+
+13. In the above Step number 8 , as per our need we have constructued the components of the pipeline. 
+One such independant component is duckling . This library helps identifying the dimensions such as time , quantity etc. 
+
+14. To install this componenet do the below steps 
+        pip3 install duckling
+ 
+15. In order to have the repository inside your working Directory, run the below commands
+        wget -qO- https://get.haskellstack.org/ | sh
+
+16.  This will bring the sources of duckling inside rasa_nlu 
+
+17.  This has a virtual run time environment through docker 
+      So , to execute this "docker run -p 8000:8000 rasa/duckling" 
+
+18.   The config files of duckling related are given in the file rasa_duckling_config.txt. Please follow. 
+
+19.  After having sufficient training data in nlu.md ,  When you run train.sh , 
+      it trains your models and places them inside the folder $projDir/MODELS
+      
+20.   Test the data by placing a file with the below content.  
+
+from rasa_nlu.model import Interpreter
+import json
+
+interpreter = Interpreter.load("./PROJECT/MODELS")
+
+message = "how much did i spend for entertainment last month" ( This is the test statement ) 
+
+result = interpreter.parse(message)
+
+print(json.dumps(result, indent=2))
+
+It gives the matched intent 
